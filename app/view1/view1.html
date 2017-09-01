@@ -1,0 +1,35 @@
+
+<div ng-controller="Chat">
+
+  Publish Chanel:
+  <select ng-model="publishChannel" ng-change="updatePublishChannel()">
+    <option value="channel_1">Channel 1</option>
+    <option value="channel_2">Channel 2</option>
+    <option value="channel_3">Channel 3</option>
+    <option value="channel_4">Channel 4</option>
+  </select>
+
+  <br />
+
+  Enter your message:
+  <input type="text" ng-model="message">
+  <button ng-click='sendMessage()'>send</button>
+
+  <hr />
+
+  Subscribe Chanel:
+  <select ng-model="subscribeChannel" ng-change="updateSubscribeChannel()">
+    <option value="channel_1">Channel 1</option>
+    <option value="channel_2">Channel 2</option>
+    <option value="channel_3">Channel 3</option>
+    <option value="channel_4">Channel 4</option>
+  </select>
+
+  <br />
+
+  Messages:
+  <ol>
+    <li ng-repeat="message in channels[subscribeChannel]">{{message.entry}}</li>
+  </ol>
+  <hr />
+</div>
