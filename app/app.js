@@ -4,14 +4,22 @@
 angular.module('myApp', [
   'ngRoute',
   'pubnub.angular.service',
-  'myApp.view1',
+  'Chat',
   'myApp.view2',
+  'login',
   'myApp.version'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');
 
   $routeProvider
-  .when('/',{template:'login/login.html'})
+  .when('/',{
+    templateUrl:'login/login.html',
+    controller: 'Login'
+  })
+  .when('/chat',{
+    templateUrl:'chat/chat.html',
+    controller: 'Chat'
+  })
   .otherwise({redirectTo: '/'});
 }]);

@@ -1,0 +1,26 @@
+<div ng-controller="Chat">
+
+  <h1>User: {{user}}</h1>
+
+  Send message to:
+  <input type="text" ng-model="receiverUser">
+
+  <br />
+
+  Enter your message:
+  <input type="text" ng-model="message">
+  <button ng-click='sendMessage()'>send</button>
+
+  <hr />
+
+  Chat with:
+  <input type="text" ng-model="chatWith">
+  <button ng-click="updateSubscribeChannel()">open chat</button>
+  <br />
+
+  Messages:
+  <ol>
+    <li ng-repeat="message in messages">{{message.entry}}</li>
+  </ol>
+  <hr />
+</div>

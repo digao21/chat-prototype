@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('myApp.view1', ['ngRoute', 'pubnub.angular.service'])
+angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
 
 .run(['Pubnub', function (Pubnub) {
   Pubnub.init({
@@ -10,27 +10,13 @@ angular.module('myApp.view1', ['ngRoute', 'pubnub.angular.service'])
 }])
 
 .controller('Chat', ['$scope', '$rootScope', 'Pubnub', function($scope, $rootScope, Pubnub) {
-  $scope.message = "";
-  $scope.publishChannel = "";
-  $scope.subscribeChannel = "";
-  $scope.oldSubscribeChannel = "";
+  $scope.user = $rootScope.user;
   $scope.closure = function(){};
-  $scope.channels = {
-    channel_1: [],
-    channel_2: [],
-    channel_3: [],
-    channel_4: [],
-  }
-
-
-  $scope.updatePublishChannel = function(){
-    console.log("New publish channel", $scope.publishChannel);
-  };
 
   $scope.sendMessage = function(){
     console.log("Send message",$scope.message);
     Pubnub.publish({
-        channel: $scope.publishChannel,
+        channel: $scope.receiverUser,
         message: $scope.message
       },
       function(status, response){
@@ -43,8 +29,9 @@ angular.module('myApp.view1', ['ngRoute', 'pubnub.angular.service'])
   };
 
   $scope.updateSubscribeChannel = function(){ 
+    console.log("Open chat:", $scope.chatWith);
     Pubnub.history({
-        channel: $scope.subscribeChannel,
+        channel: $scope.chatWith,
         reverse: false, // false is the default
         count: 100, // 100 is the default
         stringifiedTimeToken: true // false is the default
@@ -57,7 +44,7 @@ angular.module('myApp.view1', ['ngRoute', 'pubnub.angular.service'])
           return;
         }
         $scope.$apply( function () {
-          $scope.channels[$scope.subscribeChannel] = response.messages;        
+          $scope.messages = response.messages;        
         });
       }
     );
