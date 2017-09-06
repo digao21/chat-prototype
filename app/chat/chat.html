@@ -2,25 +2,30 @@
 
   <h1>User: {{user}}</h1>
 
-  Send message to:
-  <input type="text" ng-model="receiverUser">
+  <hr />
 
-  <br />
-
-  Enter your message:
-  <input type="text" ng-model="message">
-  <button ng-click='sendMessage()'>send</button>
+  Unreaded messages from:
+  <ol>
+    <li ng-repeat="(user, messages) in unreadedChats">{{user}}</li>
+  </ol>
 
   <hr />
 
-  Chat with:
-  <input type="text" ng-model="chatWith">
-  <button ng-click="updateSubscribeChannel()">open chat</button>
+  Search user:
+  <input type="text" ng-model="searchUser">
+  <button ng-click="openChat()">open chat</button>
   <br />
+
+  <h3>Chat with {{chatWith}}</h3> 
 
   Messages:
   <ol>
-    <li ng-repeat="message in messages">{{message.entry}}</li>
+    <li ng-repeat="message in messages">[{{message.from}}] - {{message.content}}</li>
   </ol>
+
+  Enter message:
+  <input type="text" ng-model="messageContent">
+  <button ng-click='sendMessage()'>send</button>
+
   <hr />
 </div>
