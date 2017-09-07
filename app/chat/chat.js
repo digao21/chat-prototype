@@ -56,7 +56,6 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
         response.messages.forEach(function(message){
           if (message === undefined) return;
           message = message.entry;
-          console.log(message);
 
           if (buff[message.id] === undefined)
             buff[message.id] = message;
@@ -68,7 +67,8 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
         var messages = [];
         for(var key in buff) {
           if (key === undefined) continue;
-          messages.push(buff[key]);
+          if (buff[key].status === 'unreaded')
+            messages.push(buff[key]);
         }
 
         $scope.$apply( function () {
@@ -143,8 +143,6 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
           $scope.messages = response.messages.map(function(msg){return msg.entry;});        
 
           // Delete messages from unreaded chat
-          console.log("Deleting");
-          console.log($scope.unreadedChats[$scope.chatWith]);
           if ($scope.unreadedChats[$scope.chatWith] !== undefined) {
           $scope.unreadedChats[$scope.chatWith].forEach(function deleteFromMyChannel(message){
               message.status = "readed";
