@@ -5,6 +5,7 @@ angular
       console.log("User", $scope.user);
       console.log("Password", $scope.password);
       $rootScope.user = $scope.user;
-      $location.path("chat");
+      $rootScope.socket = io('http://localhost:3000').emit('init', $scope.user);
+      $location.path('/chat');
     }
   }]);

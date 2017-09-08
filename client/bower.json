@@ -12,6 +12,12 @@
     "angular-mocks": "~1.5.0",
     "html5-boilerplate": "^5.3.0",
     "pubnub": "^4.15.1",
-    "pubnub-angular": "^4.0.2"
+    "pubnub-angular": "^4.0.2",
+    "socket.io-client": "^2.0.3"
+  },
+  "overrides": {
+    "socket.io-client": {
+      "main": ["socket.io.js"]
+    }
   }
 }
