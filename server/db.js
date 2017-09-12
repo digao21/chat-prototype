@@ -15,6 +15,15 @@ db.saveSocketFromUser = function (userId, socket) {
   db.users[userId].socket = socket;
 }
 
-db.newMessage = function (msg) {
-  db.chats[msg.chatId].push(msg);
+db.saveMessage = function (msg) {
+  if (db.chats[msg.chat] === undefined) db.chats[msg.chat] = [];
+  db.chats[msg.chat].push(msg);
+}
+
+db.getChatMessages = function (chatId) {
+  return db.chats[chatId];
+}
+
+db.getUnreadedMessagesFrom = function (userId) {
+  return 
 }

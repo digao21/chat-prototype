@@ -7,6 +7,14 @@ app.get('/', function(req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/chat/:chatId', function(req, res) {
+  res.send({messages: db.getChatMessages(req.params.chatId) });
+});
+
+app.get('http://localhost:3000/user/:userId/unreaded-messages', function(req, res) {
+
+});
+
 io.on('connection', function(socket) {
 
   socket.on('init', function(userId) {
@@ -15,9 +23,8 @@ io.on('connection', function(socket) {
   });
 
   socket.on('chat_message', function(msg) {
-//    console.log('[new message] - chat: '+msg.chat+'; from: '+msg.from+"; content: "+msg.content);
     console.log("[new message] - chat: %s; from: %s; content: %s", msg.chat, msg.from, msg.content);
-    socket.emit('chat_message',msg);
+    db.saveMessage(msg);
   });
 
   socket.on('disconnect', function() {

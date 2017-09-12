@@ -2,9 +2,19 @@
 
 angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
 
-.controller('Chat', ['$scope', '$rootScope', function($scope, $rootScope) {
+.controller('Chat', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
   $scope.user = $rootScope.user;
+  $scope.unreadedChats = {};
   $scope.messages = [];
+
+  $http({
+    method: 'GET',
+    url: 'http://localhost:3000/user/'+$scope.user+'/unreaded-messages'
+  }).then(function success(res){
+    console.log("Get unreaded messages SUCCESS");
+  }, function fail(res){
+    console.log("Get unreaded messages FAIL");
+  });
 
   $rootScope.socket.on('chat_message', function(msg) {
     $scope.$apply(function(){
@@ -21,7 +31,7 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
 
   $scope.sendMessage = function(){
     var message = {
-      chat: $scope.openChat,
+      chat: $scope.chatWith,
       from: $scope.user,
       content: $scope.messageContent
     };
@@ -30,13 +40,28 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   };
 
   $scope.openChat = function(){
-    $scope.openChat = $scope.chatWith;
+    $scope.chatWith = $scope.searchUser;
 
-    if ($scope.unreadedChats[msg.chat])
-      $scope.messages = $scope.unreadedChats[msg.chat];
+
+    $http({
+      method: 'GET',
+      url: 'http://localhost:3000/chat/'+$scope.chatWith,
+
+    }).then(function successCallback(res) {
+      $scope.messages = res.data.messages;
+      delete $scope.unreadedChats[$scope.chatWith];
+
+    }, function errorCallback(res) {
+      console.log("Fail -", res);
+    });
+
+/*
+    if ($scope.unreadedChats[$scope.openChat])
+      $scope.messages = $scope.unreadedChats[$scope.openChat];
 
     else
       $scope.messages = [];
+*/
   }; 
 
 }])
