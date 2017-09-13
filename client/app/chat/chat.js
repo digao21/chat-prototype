@@ -4,35 +4,38 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
 
 .controller('Chat', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
   $scope.user = $rootScope.user;
-  $scope.unreadedChats = {};
-  $scope.messages = [];
+  $scope.unreadedChats = [];
+  $scope.chat = {};
 
-  $http({
-    method: 'GET',
-    url: 'http://localhost:3000/user/'+$scope.user+'/unreaded-messages'
-  }).then(function success(res){
-    console.log("Get unreaded messages SUCCESS");
-  }, function fail(res){
-    console.log("Get unreaded messages FAIL");
+  $http.get('http://localhost:3000/user/' + $rootScope.user)
+  .then(
+  function success(res) {
+    $scope.user = getUserFromUserDto( res.data );
+    $rootScope.socket.emit('init', $scope.user.id);
+  },
+  function fail(res) {
+    console.log("[FAIL] - request for user", res);
   });
 
-  $rootScope.socket.on('chat_message', function(msg) {
+  $rootScope.socket.on('chat_message', function(msg, ack) {
     $scope.$apply(function(){
-      if ($scope.openChat === msg.chat) {
-        $scope.messages.push(msg);
+      if ($scope.chat.id === msg.chatId) {
+        $scope.chat.messages.push(msg);
+        ack("READED");
 
       } else {
-        if ($scope.unreadedChats[msg.chat] === undefined)
-          $scope.unreadedChats[msg.chat] = []
-        $scope.unreadedChats[msg.chat].push(msg);
+        var index = $scope.user.unreadedChats.indexOf( msg.chatId );
+        if (index === -1) $scope.user.unreadedChats.push( msg.chatId );
+
+        ack("UNREADED");
       }
     });
   });
 
   $scope.sendMessage = function(){
     var message = {
-      chat: $scope.chatWith,
-      from: $scope.user,
+      chatId: $scope.chat.id,
+      senderId: $scope.user.id,
       content: $scope.messageContent
     };
 
@@ -42,27 +45,28 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   $scope.openChat = function(){
     $scope.chatWith = $scope.searchUser;
 
+    $http.get('http://localhost:3000/chat/two-users/' + $scope.user.id + '/' + $scope.chatWith)
+    .then(
+    function success(res) {
+      $scope.chat = res.data;
 
-    $http({
-      method: 'GET',
-      url: 'http://localhost:3000/chat/'+$scope.chatWith,
+      var index = $scope.user.unreadedChats.indexOf( $scope.chat.id );
+      if (index > -1) $scope.user.unreadedChats.splice( index, 1 );
 
-    }).then(function successCallback(res) {
-      $scope.messages = res.data.messages;
-      delete $scope.unreadedChats[$scope.chatWith];
-
-    }, function errorCallback(res) {
+      $http.delete('http://localhost:3000/user/'+ $scope.user.id + '/unreaded-chat/' + $scope.chat.id);
+    },
+    function error(res) {
       console.log("Fail -", res);
     });
-
-/*
-    if ($scope.unreadedChats[$scope.openChat])
-      $scope.messages = $scope.unreadedChats[$scope.openChat];
-
-    else
-      $scope.messages = [];
-*/
   }; 
-
 }])
 
+function getUserFromUserDto (userDto) {
+  const user = {
+    id: userDto.id,
+    chat: {},
+    unreadedChats: userDto.unreadedChats
+  };
+
+  return user;
+}

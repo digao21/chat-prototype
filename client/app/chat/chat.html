@@ -1,12 +1,12 @@
 <div ng-controller="Chat">
 
-  <h1>User: {{user}}</h1>
+  <h1>User: {{user.id}}</h1>
 
   <hr />
 
   Unreaded messages from:
   <ol>
-    <li ng-repeat="(user, messages) in unreadedChats">{{user}}</li>
+    <li ng-repeat="chatId in user.unreadedChats">{{chatId}}</li>
   </ol>
 
   <hr />
@@ -20,7 +20,7 @@
 
   Messages:
   <ol>
-    <li ng-repeat="message in messages">[{{message.from}}] - {{message.content}}</li>
+    <li ng-repeat="message in chat.messages">[{{message.senderId}}] - {{message.content}}</li>
   </ol>
 
   Enter message:

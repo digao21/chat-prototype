@@ -5,25 +5,35 @@ const db = module.exports = {
   chats: {}
 };
 
-db.findUser = function (userId) {
-  return db.users[userId];
-}
-
-
 db.saveSocketFromUser = function (userId, socket) {
-  if(db.users[userId] === undefined) db.users[userId] = {};
   db.users[userId].socket = socket;
 }
 
-db.saveMessage = function (msg) {
-  if (db.chats[msg.chat] === undefined) db.chats[msg.chat] = [];
-  db.chats[msg.chat].push(msg);
+db.saveUnreadedChat = function (userId, chatId) {
+  if ( !db.users[ userId ].unreadedChats.has( chatId ) )
+    db.users[ userId ].unreadedChats.add( chatId );
 }
 
-db.getChatMessages = function (chatId) {
+db.deleteUnreadedChat = function (userId, chatId) {
+  db.users[ userId ].unreadedChats.delete( chatId );
+}
+
+db.saveUser = function (user) {
+  db.users[ user.id ] = user;
+}
+
+db.getUser = function (userId) {
+  return db.users[ userId ];
+}
+
+db.saveMessage = function (msg) {
+  db.chats[msg.chatId].messages.push(msg);
+}
+
+db.getChat = function (chatId) {
   return db.chats[chatId];
 }
 
-db.getUnreadedMessagesFrom = function (userId) {
-  return 
+db.saveChat = function (chat) {
+  db.chats[ chat.id ] = chat;
 }
