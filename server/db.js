@@ -1,17 +1,33 @@
 "use strict";
 
 const db = module.exports = {
-  users: {},
-  chats: {}
+  users:   {},
+  chats:   {},
+  sockets: {}
 };
 
 db.saveSocketFromUser = function (userId, socket) {
   db.users[userId].socket = socket;
+  db.sockets[socket.id] = userId;
+}
+
+db.deleteSocket = function (socket) {
+  const userId = db.sockets[ socket.id ];
+  db.users[ userId ].socket = undefined;
+  delete db.sockets[ socket.id ];
+}
+
+db.getUserIdFromSocket = function (socket) {
+  return db.sockets[ socket.id ];
 }
 
 db.saveUnreadedChat = function (userId, chatId) {
   if ( !db.users[ userId ].unreadedChats.has( chatId ) )
     db.users[ userId ].unreadedChats.add( chatId );
+}
+
+db.setUserOnline = function (userId, isOn) {
+  db.users[ userId ].online = isOn;
 }
 
 db.deleteUnreadedChat = function (userId, chatId) {
@@ -36,4 +52,8 @@ db.getChat = function (chatId) {
 
 db.saveChat = function (chat) {
   db.chats[ chat.id ] = chat;
+}
+
+db.addChatToUser = function (user, chat) {
+  db.users[ user.id ].chats.add( chat.id );
 }

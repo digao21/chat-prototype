@@ -10,8 +10,9 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   $http.get('http://localhost:3000/user/' + $rootScope.user)
   .then(
   function success(res) {
+    console.log( res.data );
     $scope.user = getUserFromUserDto( res.data );
-    $rootScope.socket.emit('init', $scope.user.id);
+    $rootScope.socket.emit('init', $scope.user.id, function acknowledge (status) {});
   },
   function fail(res) {
     console.log("[FAIL] - request for user", res);

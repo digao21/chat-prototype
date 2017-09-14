@@ -29,9 +29,17 @@ app.get('/user/:userId', function(req, res) {
   var user = db.getUser( userId );
 
   if (user === undefined) user = createUser( userId );
+
+  var usersOnline = new Set();
+  user.chats.forEach(function (chatId) {
+    var chat = db.getChat( chatId );
+    if (db.isUserOnline( chat.usersId[0] )) usersOnline.add( chat.usersId[0] );
+    if (db.isUserOnline( chat.usersId[1] )) usersOnline.add( chat.usersId[1] );
+  });
  
   const userDto = {
     id: user.id,
+    usersOnline: Array.from( usersOnline ),
     unreadedChats: Array.from( user.unreadedChats )
   };
 
@@ -45,15 +53,17 @@ app.delete('/user/:userId/unreaded-chat/:chatId', function(req) {
   db.deleteUnreadedChat( userId, chatId );
 });
 
+var total = 0;
 io.on('connection', function(socket) {
 
-  socket.on('init', function(userId) {
-    console.log("User connected: "+userId);
-    db.saveSocketFromUser(userId, socket);
+  socket.on('init', function(userId, ack) {
+    console.log("user connected %s; total %s", userId, ++total);
+    db.saveSocketFromUser( userId, socket );
+    db.setUserOnline( userId, true );
+    ack("OK");
   });
 
   socket.on('chat_message', function(msg) {
-    console.log("[new message] - chatId: %s; senderId: %s; content: %s", msg.chatId, msg.senderId, msg.content);
     db.saveMessage(msg);
 
     const chat = db.getChat( msg.chatId );
@@ -73,7 +83,12 @@ io.on('connection', function(socket) {
   });
 
   socket.on('disconnect', function() {
-    console.log('User disconnected');
+    console.log('user disconnected; total %s', --total);
+
+    const userId = db.getUserIdFromSocket( socket );
+    db.setUserOnline( userId, false );
+
+    db.deleteSockete( socket );
   });
 });
 
@@ -89,7 +104,9 @@ function getChatId (userA, userB) {
 function createUser (userId) {
    var user = {
      id: userId,
+     online: false,
      socket: undefined,
+     chats: new Set(),
      unreadedChats: new Set()
    };
  
@@ -108,5 +125,13 @@ function createChat (chatId, userA, userB) {
   if (db.getUser( userB.id ) === undefined) createUser( userB.id );
 
   db.saveChat( chat );
+  db.addChatToUser( userA, chat );
+  db.addChatToUser( userB, chat );
   return chat; 
+}
+
+function memoryAnalise() {
+  var mem = process.memoryUsage();
+  console.log("[memory] - rss: %s; heap-total: %s; heap-used: %s; external: %s", mem.rss, mem.heapTotal, mem.heapUsed, mem.external);
+  setTimeout(memoryAnalise, 1000);
 }
