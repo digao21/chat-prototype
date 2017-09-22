@@ -8,13 +8,11 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.get('/chat/two-users/:userId1/:userId2', function(req, res) {
-  var userA = {id: req.params.userId1};
-  var userB = {id: req.params.userId2};
+  var userA = db.getUser( req.params.userId1 ) || createUser( req.params.userId1 );
+  var userB = db.getUser( req.params.userId2 ) || createUser( req.params.userId2 );
+
   var chatId = getChatId(userA, userB);
-
-  var chat = db.getChat( chatId );
-
-  if (chat === undefined) chat = createChat( chatId, userA, userB );
+  var chat = db.getChat( chatId ) || createChat( chatId, userA, userB );
 
   const chatDto = {
     id: chat.id,
@@ -25,10 +23,7 @@ app.get('/chat/two-users/:userId1/:userId2', function(req, res) {
 });
 
 app.get('/user/:userId', function(req, res) {
-  var userId = req.params.userId;
-  var user = db.getUser( userId );
-
-  if (user === undefined) user = createUser( userId );
+  var user = db.getUser( req.params.userId ) || createUser( req.params.userId );
 
   var usersOnline = new Set();
   user.chats.forEach(function (chatId) {
@@ -60,6 +55,16 @@ io.on('connection', function(socket) {
     console.log("user connected %s; total %s", userId, ++total);
     db.saveSocketFromUser( userId, socket );
     db.setUserOnline( userId, true );
+
+    broadcastUserChats (userId, function (socket) {
+      socket.emit('user_status', {
+        method: 'UPDATE',
+        userId: userId,
+        status: 'online',
+        value:  true
+      });
+    });
+
     ack("OK");
   });
 
@@ -83,18 +88,42 @@ io.on('connection', function(socket) {
   });
 
   socket.on('disconnect', function() {
-    console.log('user disconnected; total %s', --total);
-
     const userId = db.getUserIdFromSocket( socket );
-    db.setUserOnline( userId, false );
+    if (userId !== undefined) {
+      console.log('user disconnected; total %s', --total);
+      db.setUserOnline( userId, false );
+      db.deleteSocket( socket );
 
-    db.deleteSockete( socket );
+      broadcastUserChats (userId, function (socket) {
+        socket.emit('user_status', {
+          method: 'UPDATE',
+          userId: userId,
+          status: 'online',
+          value:  false
+        });
+      });
+    }
   });
 });
 
 http.listen(3000, function(){
   console.log('listening on *:3000');
 });
+
+function broadcastUserChats (userId, fn) {
+  var usersToNotify = new Set();
+  db.getUser( userId ).chats.forEach( function (chatId) {
+    usersToNotify.add( db.getChat( chatId ).usersId[0] );
+    usersToNotify.add( db.getChat( chatId ).usersId[1] );
+  });
+
+  usersToNotify.delete(userId);
+  usersToNotify.forEach( function (userId) {
+    var user = db.getUser( userId );
+    if (user.socket !== undefined && user.socket.connected)
+      fn( user.socket ); 
+  });
+}
 
 function getChatId (userA, userB) {
   if (userA.id < userB.id) return userA.id + userB.id;
@@ -121,12 +150,36 @@ function createChat (chatId, userA, userB) {
     messages: []
   };
 
-  if (db.getUser( userA.id ) === undefined) createUser( userA.id );
-  if (db.getUser( userB.id ) === undefined) createUser( userB.id );
-
   db.saveChat( chat );
   db.addChatToUser( userA, chat );
   db.addChatToUser( userB, chat );
+
+  if (userA.socket && userA.socket.connected) {
+    userA.socket.emit('user_status', {
+      method: 'UPDATE',
+      userId: userB.id,
+      status: 'online',
+      value:  db.isUserOnline( userB.id )
+    });
+  }
+  else {
+    console.log("User %s not connected", userA.id);
+    console.log(userA.socket);
+  }
+
+  if (userB.socket && userB.socket.connected) {
+    userB.socket.emit('user_status', {
+      method: 'UPDATE',
+      userId: userA.id,
+      status: 'online',
+      value:  db.isUserOnline( userA.id )
+    });
+  }
+  else {
+    console.log("User %s not connected", userB.id);
+    console.log(userB.socket);
+  }
+
   return chat; 
 }
 

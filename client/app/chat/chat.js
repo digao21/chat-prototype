@@ -7,17 +7,26 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   $scope.unreadedChats = [];
   $scope.chat = {};
 
-  $http.get('http://localhost:3000/user/' + $rootScope.user)
-  .then(
-  function success(res) {
-    console.log( res.data );
-    $scope.user = getUserFromUserDto( res.data );
-    $rootScope.socket.emit('init', $scope.user.id, function acknowledge (status) {});
-  },
-  function fail(res) {
-    console.log("[FAIL] - request for user", res);
-  });
+  $scope.socket = new WebSocket("ws://localhost:8081");
 
+  $scope.socket.onopen = function () {
+    console.log("socket connected");
+  }
+
+  $scope.socket.onmessage = function (evt) {
+    console.log("[evt] - data: %s", evt.data);
+  }
+
+  $scope.socket.onclose = function () {
+    console.log("socket closed");
+  }
+
+  $scope.sendMessage = function(){}
+  $scope.openChat = function(){}
+
+}])
+
+/*
   $rootScope.socket.on('chat_message', function(msg, ack) {
     $scope.$apply(function(){
       if ($scope.chat.id === msg.chatId) {
@@ -32,6 +41,15 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
       }
     });
   });
+
+  $rootScope.socket.on('user_status', function(msg) {
+    console.log(msg);
+    $scope.$apply(function(){
+      var index = $scope.user.usersOnline.indexOf(msg.userId);
+      if (index === -1 &&  msg.value) $scope.user.usersOnline.push( msg.userId );
+      if (index !== -1 && !msg.value) $scope.user.usersOnline.splice( index, 1 );
+    });
+  }); 
 
   $scope.sendMessage = function(){
     var message = {
@@ -60,14 +78,15 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
       console.log("Fail -", res);
     });
   }; 
-}])
 
 function getUserFromUserDto (userDto) {
   const user = {
     id: userDto.id,
     chat: {},
+    usersOnline: userDto.usersOnline,
     unreadedChats: userDto.unreadedChats
   };
 
   return user;
 }
+*/

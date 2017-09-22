@@ -42,6 +42,10 @@ db.getUser = function (userId) {
   return db.users[ userId ];
 }
 
+db.isUserOnline = function (userId) {
+  return db.users[ userId ].online;
+}
+
 db.saveMessage = function (msg) {
   db.chats[msg.chatId].messages.push(msg);
 }
