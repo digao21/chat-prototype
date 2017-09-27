@@ -10,7 +10,7 @@ angular
         $location.path('/chat');
 
         console.log("success");
-        console.log("id: %s; username: %s; password %s", res.data.id, res.data.username, res.data.password);
+        console.log(res.data);
       },
       function error (err) {
         console.log("status", err.status);

@@ -1,19 +1,11 @@
 require 'sequel'
-require 'json'
 
-module Chat
+module ChatSrv
   module Model
-    class User 
-      def to_json
-        hash = {}
-        hash["id"] = @id
-        hash["username"] = @username
-        hash["password"] = @password
-        hash.to_json
-      end
-    end
-
-    class UserDB < Sequel::Model(:users)
+    class User < Sequel::Model
+      many_to_many :chats
+      #many_to_many :unreaded_chats, class: ChatSrv::Model::Chat, left_key: :chat_id, right_key: :user_id, join_table: :unreaded_chats_users
+      one_to_many :messages
     end
   end
 end
