@@ -4,21 +4,19 @@
 
   <hr />
 
-<!--
   Users online:
   <ol>
-    <li ng-repeat="userOnline in user.usersOnline">{{userOnline}}</li>
+    <li ng-repeat="userOnline in user.usersOnline">{{userOnline.username}}</li>
   </ol>
 
   <hr />
 
   Unreaded messages from:
   <ol>
-    <li ng-repeat="chatId in user.unreadedChats">{{chatId}}</li>
+    <li ng-repeat="chat in user.unreadedChats">{{chat.users[0].username}} - {{chat.users[1].username}}</li>
   </ol>
 
   <hr />
--->
 
   Search user:
   <input type="text" ng-model="searchUser">

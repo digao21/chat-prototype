@@ -1,3 +1,4 @@
+require 'sinatra/base'
 require 'eventmachine'
 require 'em-websocket'
 require 'sequel'
@@ -6,17 +7,16 @@ require 'json'
 
 DB_CONNECTION = Sequel.connect( adapter: :postgres, user: 'rodrigo', database: 'rodrigo')
 
-require_relative './model/chat'
-require_relative './model/user'
-require_relative './model/message'
+# Dependencies first
 
-require_relative './utils/socket-poll'
+require './utils/socket-poll'
+require './model/include'
 
-require_relative './controller/http'
-require_relative './controller/websocket'
+Dir["./model/*.rb"].each {|file| require file }
+Dir["./core/*.rb"].each {|file| require file }
+Dir["./controller/*.rb"].each {|file| require file }
 
 EventMachine.run do
-
 
   EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8081) do |ws|
     ChatSrv::Api::Websocket.handle_new_websocket ws

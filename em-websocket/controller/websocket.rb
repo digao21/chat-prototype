@@ -2,61 +2,59 @@ module ChatSrv
   module Api
     module Websocket
 
-      SocketPoll = ChatSrv::Utils::SocketPoll
-      Message = ChatSrv::Model::Message
-      User = ChatSrv::Model::User
-      Chat = ChatSrv::Model::Chat
+      Core = ChatSrv::Core
 
       def self.handle_new_websocket ws
         ws.onopen do
-          puts "New User - ws.id" + ws.object_id.to_s
+          puts "[WS ON_OPEN] - ws.id: #{ws.object_id.to_s}"
         end
 
         ws.onmessage do |message|
           begin
             msg = JSON.parse message
 
-            case msg["channel"]
-            when "INIT"
-              puts "[WS INIT] - user_Id: #{msg["userId"]}"
-              SocketPoll.new_connection ws, msg["userId"]
+            case msg["event"]
+            when "INIT_CONNECTION"
+              puts "[INIT_CONNECTION] - user_Id: #{msg["userId"]}"
+              Core::UserEvent.init_connection ws, msg
 
-            when "CHAT"
-              puts "[WS CHAT] - #{msg["content"]}"
+            when "GET_CHAT"
+              puts "[GET_CHAT] - chat_id: #{msg["chatId"]}"
+              Core::ChatEvent.get_chat ws, msg
 
-              # SAVE MSG
-              message = Message.create :content => msg["content"]
+            when "CREATE_CHAT"
+              puts "[CREATE_CHAT]"
+              Core::ChatEvent.create_chat ws, msg
 
-              user = User.where( :id => msg["senderId"] ).first
-              user.add_message message
+            when "NEW_MSG_S"
+              puts "[NEW_MSG_S]"
+              Core::MessageEvent.new_msg ws, msg
 
-              chat = Chat.where( :id => msg["chatId"] ).first
-              chat.add_message message
-
-              # DO BROADCAST
-              msg["sender"] = user.username
-              chat.users.each do |user|
-                socket = SocketPoll.get_socket_from_user_id user.id
-                socket.send msg.to_json if socket
-              end
+            when "NEW_MSG_C_ACK"
+              puts "[NEW_MSG_C_ACK]"
+              Core::MessageEvent.new_msg_ack ws, msg
 
             else
               #TODO: HANDLE NO CHANNEL ERROR
-              puts "[WS ONMSG] - CHANNEL UNDEFINED"
+              puts "[WS ON_MESSAGE] - CHANNEL UNDEFINED"
             end
 
           rescue JSON::ParserError
             #TODO: HANDLE ERROR
-            puts "[WS ONMSG] - PARSER ERROR"
+            puts "[WS ON_MESSAGE] - PARSER ERROR"
           rescue Exception => e 
             #TODO: HANDLE ERROR
-            puts "[WS ONMSG] - #{e.message}"
+            puts "[WS ON_MESSAGE] - #{e.message}"
           end
         end
 
         ws.onclose do
-           puts "WebSocket closed"
-           SocketPoll.close_connection ws
+          begin
+            puts "WebSocket closed"
+            Core::UserEvent.close_connection ws
+          rescue
+            puts "[WS ON_CLOSE] - ERROR"
+          end
         end
       end
     end

@@ -49,9 +49,7 @@ CREATE TABLE unreaded_chats_users (
 
 INSERT INTO unreaded_chats_users (chat_id, user_id) VALUES
 (1,1),
-(1,2),
-(2,1),
-(3,3);
+(1,2);
 
 -- CREATE TABLE MESSAGES
 CREATE TABLE messages (

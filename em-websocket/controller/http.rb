@@ -1,9 +1,3 @@
-require 'sinatra/base'
-
-require_relative '../model/user'
-require_relative '../model/chat'
-require_relative '../model/message'
-
 module ChatSrv
   module Api
     class Http < Sinatra::Base
@@ -22,8 +16,12 @@ module ChatSrv
 
         halt 400, "Ilegal user/password combination" if user == nil
 
-        parse_user_dto user
+        user.id.to_s
       end
+
+      #####################################
+      # WARNING
+      # ALL METHODS BELOW ARE DEPRECATED !!
 
       # Get user based on username
       get '/user/username/:username' do
@@ -87,6 +85,7 @@ module ChatSrv
         "OK"
       end
 
+      private
       def parse_user_dto user
         user_dto = {}
 
@@ -118,6 +117,17 @@ module ChatSrv
         user.unreaded_chats.each do |chat|
           chat_dto = {}
           chat_dto["id"] = chat.id
+
+          chat_dto["users"] = []
+          chat.users.each do |user|
+            buff = {}
+            buff["id"] = user.id
+            buff["username"] = user.username
+
+            chat_dto["users"].push buff
+          end
+
+          user_dto["unreadedChats"].push chat_dto
         end
 
         user_dto.to_json

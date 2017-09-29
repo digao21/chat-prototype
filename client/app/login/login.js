@@ -6,7 +6,7 @@ angular
       $http.get('http://localhost:8080/user/login/' + $scope.user + "/" + $scope.password)
       .then(
       function success (res) {
-        $rootScope.user = res.data;
+        $rootScope.userId = res.data;
         $location.path('/chat');
 
         console.log("success");

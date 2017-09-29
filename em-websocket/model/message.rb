@@ -1,8 +1,6 @@
-require 'sequel'
-
 module ChatSrv
   module Model
-    class Message < Sequel::Model
+    class Message
       many_to_one :chat
       many_to_one :user
     end

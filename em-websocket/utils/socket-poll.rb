@@ -19,6 +19,10 @@ module ChatSrv
       def self.get_socket_from_user_id user_id
         @@map_user_id_to_socket[ user_id ]
       end
+
+      def self.get_user_id_from_socket socket
+        @@map_socket_to_user_id[ socket.object_id ]
+      end
     end
   end
 end
