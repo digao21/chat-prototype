@@ -2,71 +2,120 @@
 
 angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
 
-.controller('Chat', ['$scope', '$rootScope', '$http', function($scope, $rootScope, $http) {
-  $scope.user = {};
-  $scope.unreadedChats = [];
-  $scope.chat = {};
+.controller('Chat', ['$rootScope', '$scope', 'ChatService', function($rootScope, $scope, ChatService) {
+  var user = $rootScope.user;
 
-  $scope.socket = new WebSocket("ws://localhost:8081");
-
-  $scope.socket.onopen    = socketOnOpen;
-  $scope.socket.onmessage = socketOnMessage;
-  $scope.socket.onclose   = socketOnClose;
+  $scope.user = user;
+  $scope.username = user.name; // Change username for name
+  $scope.searchUser = "";
+  $scope.chats = [];
+  $scope.myChat = {};
 
   $scope.sendMessage = sendMessage
   $scope.openChat = openChat
 
-  function sendMessage () {
-    var msg = {
-      event: "NEW_MSG_S",
-      chatId: $scope.chat.id,
-      sender: $scope.user.id,
-      content: $scope.messageContent
-    }
+  var chatCtr = this;
+  chatCtr["OPEN_CONNECTION"] = onOpen;
+  chatCtr["GET_USER_RES"] = getUserRes;
+  chatCtr["GET_CHAT_RES"] = getChatRes;
+  chatCtr["NEW_MSG_C"] = newMsg;
 
-    $scope.socket.send( JSON.stringify(msg) );
+  ChatService.addListener( chatCtr, [
+    'OPEN_CONNECTION',
+    'GET_USER_RES',
+    'GET_CHAT_RES',
+    'NEW_MSG_C'
+  ]);
+
+  if (ChatService.getConnectionState() === "OPEN")
+    ChatService.getUser( user.id );
+
+  function sendMessage () {
+    var chatId = $scope.myChat.id;
+    var sender = $scope.user.id;
+    var content = $scope.messageContent;
+
+    ChatService.sendChatMsg( chatId, sender, content );
   }
 
   function openChat () {
-    var chat = getChatWithUser($scope.user.chats, $scope.searchUser);
+    var searchUser = $scope.searchUser.toLowerCase();
+    var chats = [];
 
-    if (chat) {
-      console.log("Chat is defined");
+    if (searchUser === "") return;
 
-      var msg = {
-        event: "GET_CHAT",
-        chatId: chat.id
-      }
+    $scope.chats.forEach(function(chat) {
+      var cUser = chat.chatWith.toLowerCase();
 
-      $scope.socket.send( JSON.stringify(msg) );
+      if (cUser.search( searchUser ) !== -1)
+        chats.push(chat);
+    });
+
+    if(chats.length <= 0) {
+      alert("User not found");
+      return;
     }
 
-    // chat is undefined
-    else {
-      console.log("Chat is undefined");
-
-      var msg = {
-        event: "CREATE_CHAT",
-        users: [$scope.user.username, $scope.searchUser]
-      }
-
-      $scope.socket.send( JSON.stringify(msg) );
+    if(chats.length >= 2) {
+      alert("Ambiguous user");
+      alert;
     }
+
+    ChatService.getChat( chats[0].id );
   }
 
-  function socketOnOpen () {
-    console.log("[SOCKET CONNECTION]");
-
-    var initMsg = {
-      event: "INIT_CONNECTION",
-      userId: $rootScope.userId
-    }
-
-    $scope.socket.send( JSON.stringify(initMsg) );
+  function onOpen () {
+    ChatService.getUser( $scope.user.id );
   }
 
+  function getUserRes(msg) {
+    var chats = [];
+    var user = msg.user;
+
+    user.chats.forEach(function(chat) {
+      var myChat = {};
+
+      myChat.id = chat.id;
+      myChat.chatWith = (chat.users[0].name != $scope.user.name) ?
+                        chat.users[0].name :
+                        chat.users[1].name;
+       
+
+      chats.push(myChat);
+    });
+
+    $scope.$apply(function(){
+      $scope.chats = chats;
+    });
+  }
+
+  function getChatRes(msg) {
+    var chat = msg.chat;
+    console.log(chat);
+
+    $scope.$apply(function(){
+      $scope.chatWith = (chat.users[0].name != $scope.user.name) ?
+                        chat.users[0].name :
+                        chat.users[1].name;
+      $scope.myChat = chat;
+    });
+  }
+
+  function newMsg(data) {
+    var msg = data.message;
+    console.log(msg);
+
+    if(msg.chatId === $scope.myChat.id) {
+      $scope.$apply(function(){
+        $scope.myChat.messages.push(msg);
+      });
+    }
+  }
+}])
+
+/*
   function socketOnMessage (evt) {
-    console.log("[ON MESSAGE]");
+
 
     var msg = JSON.parse( evt.data );
 
@@ -83,7 +132,7 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   }
 
   function socketOnClose () {
-    console.log("[ON CLOSE]");
+
   }
 
   function userOnline(data) {
@@ -169,7 +218,6 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
     });
   }
 
-}])
 
 function getChatWithUser( chats, username ) {
   var myChat = undefined;
@@ -182,61 +230,4 @@ function getChatWithUser( chats, username ) {
 
   return myChat;
 }
-
-/*
-
-  $scope.sendMessage = function(){
-    if ($scope.chat.id === undefined) return;
-
-    const message = {
-      channel: "CHAT",
-      chatId: $scope.chat.id,
-      sender: $scope.user.id,
-      content: $scope.messageContent
-    }
-
-    $scope.socket.send( JSON.stringify(message) );
-  }
-
-  $scope.openChat = function(){
-    var chat = getChatWithUser($scope.user.chats, $scope.searchUser);
-
-    if (chat) {
-      console.log("Chat is defined");
-
-      $http.get('http://localhost:8080/chat/' + chat.id)
-      .then(
-      function success (res) {
-        $scope.chatWith = $scope.searchUser;
-        $scope.chat = res.data;
-      },
-      function error (err){
-        console.log("[GET /chat/:chatId] - FAIL");
-      });
-    }
-
-    // chat is undefined
-    else {
-      console.log("Chat is undefined");
-
-      $http.get('http://localhost:8080/user/username/' + $scope.searchUser)
-      .then(
-      function success (res) {
-        console.log("[GET /user/username/:username] - SUCCESS");
- 
-        $http.post('http://localhost:8080/chat/create', {users: [$scope.user.id, res.data.id]})
-        .then(
-        function success (res) {
-          console.log("[GET /chat/create] - SUCCESS");
-          console.log(res.data);
-        },
-        function error (err) {
-          console.log("[GET /chat/create] - FAIL");
-        });
-      },
-      function fail (err) {
-        console.log("[GET /user/username/:username] - FAIL");
-      });
-    }
-  }
 */

@@ -1,12 +1,16 @@
 angular
   .module("login", [])
-  .controller("Login", ["$rootScope","$scope","$location", "$http", function($rootScope, $scope, $location, $http) {
+  .controller("Login", ["$rootScope","$scope","$location", "$http", "ChatAPI", function($rootScope, $scope, $location, $http, ChatAPI) {
     $scope.submit = function () {
 
-      $http.get('http://localhost:8080/user/login/' + $scope.user + "/" + $scope.password)
+      var payload = { email: $scope.email, password: $scope.password };
+      var url = 'https://api-dev1.kuadro.com.br/api/internal/auth';
+
+      $http.post(url, payload)
       .then(
       function success (res) {
-        $rootScope.userId = res.data;
+        $rootScope.user = res.data.user_details;
+        ChatAPI.turnOn();
         $location.path('/chat');
 
         console.log("success");

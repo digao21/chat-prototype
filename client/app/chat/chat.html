@@ -1,9 +1,10 @@
 <div >
 
-  <h1>User: {{user.username}}</h1>
+  <h1>User: {{username}}</h1>
 
   <hr />
 
+<!--
   Users online:
   <ol>
     <li ng-repeat="userOnline in user.usersOnline">{{userOnline.username}}</li>
@@ -17,8 +18,16 @@
   </ol>
 
   <hr />
+-->
 
-  Search user:
+  Avaible chats
+  <ol>
+    <li ng-repeat="chat in chats">{{chat.chatWith}}</li>
+  </ol>
+
+  <hr />
+
+  Open chat:
   <input type="text" ng-model="searchUser">
   <button ng-click="openChat()">open chat</button>
   <br />
@@ -27,7 +36,7 @@
 
   Messages:
   <ol>
-    <li ng-repeat="message in chat.messages">[{{message.sender}}] - {{message.content}}</li>
+    <li ng-repeat="message in myChat.messages">[{{message.sender || user.name}}] - {{message.content}}</li>
   </ol>
 
   Enter message:
