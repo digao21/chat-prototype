@@ -18,13 +18,13 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
   chatCtr["OPEN_CONNECTION"] = onOpen;
   chatCtr["GET_USER_RES"] = getUserRes;
   chatCtr["GET_CHAT_RES"] = getChatRes;
-  chatCtr["NEW_MSG_C"] = newMsg;
+  chatCtr["NEW_MSG"] = newMsg;
 
   ChatService.addListener( chatCtr, [
     'OPEN_CONNECTION',
     'GET_USER_RES',
     'GET_CHAT_RES',
-    'NEW_MSG_C'
+    'NEW_MSG'
   ]);
 
   if (ChatService.getConnectionState() === "OPEN")
@@ -45,6 +45,7 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
     if (searchUser === "") return;
 
     $scope.chats.forEach(function(chat) {
+      if (!chat.chatWith) return;
       var cUser = chat.chatWith.toLowerCase();
 
       if (cUser.search( searchUser ) !== -1)
@@ -98,6 +99,8 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
                         chat.users[0].name :
                         chat.users[1].name;
       $scope.myChat = chat;
+
+      ChatService.chatReaded(chat.id, $scope.user.id);
     });
   }
 
@@ -106,6 +109,9 @@ angular.module('Chat', ['ngRoute', 'pubnub.angular.service'])
     console.log(msg);
 
     if(msg.chatId === $scope.myChat.id) {
+      if(msg.senderId !== $scope.user.id)
+        ChatService.msgReaded(msg.id);
+
       $scope.$apply(function(){
         $scope.myChat.messages.push(msg);
       });

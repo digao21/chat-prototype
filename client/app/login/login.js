@@ -1,10 +1,10 @@
 angular
   .module("login", [])
-  .controller("Login", ["$rootScope","$scope","$location", "$http", "ChatAPI", function($rootScope, $scope, $location, $http, ChatAPI) {
+  .controller("Login", ["$rootScope","$scope","$location", "$http", "ChatAPI", "Const", function($rootScope, $scope, $location, $http, ChatAPI, Const) {
     $scope.submit = function () {
 
       var payload = { email: $scope.email, password: $scope.password };
-      var url = 'https://api-dev1.kuadro.com.br/api/internal/auth';
+      var url = Const.backendUrl + '/internal/auth';
 
       $http.post(url, payload)
       .then(

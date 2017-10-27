@@ -19,6 +19,9 @@
             sendMessage: sendMessage, // Maybe you can remove this
             sendChatMsg: sendChatMsg,
 
+            msgReaded: msgReaded,
+            chatReaded: chatReaded,
+
             getChat: getChat,
             getUser: getUser
         }
@@ -57,7 +60,7 @@
 
         function sendChatMsg(chatId, sender, content) {
             var msg = {
-                event: 'NEW_MSG_S',
+                event: 'NEW_MSG',
                 chatId: chatId,
                 sender: sender,
                 content: content
@@ -78,6 +81,25 @@
         function getUser(userId) {
             var msg = {
                 event: "GET_USER",
+                userId: userId
+            }
+
+            ChatAPI.sendMessage( msg );
+        }
+
+        function msgReaded( msgId ) {
+            var msg = {
+                event: "MSG_READED",
+                msgId: msgId
+            }
+
+            ChatAPI.sendMessage( msg );
+        }
+
+        function chatReaded(chatId, userId) {
+            var msg = {
+                event: "CHAT_READED",
+                chatId: chatId,
                 userId: userId
             }
 

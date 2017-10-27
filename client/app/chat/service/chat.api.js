@@ -3,7 +3,7 @@
     'use strict';
     angular.module('Chat').factory('ChatAPI', ChatAPI);
 
-    ChatAPI.$inject = ['ChatWSocket', 'ChatBroadcaster'];
+    ChatAPI.$inject = ['ChatWSocket', 'ChatBroadcaster', 'Const'];
 
     const ON  = "ON";
     const OFF = "OFF";
@@ -11,7 +11,7 @@
     var connection;
     var state = OFF;
 
-    function ChatAPI(ChatWSocket, ChatBroadcaster) {
+    function ChatAPI(ChatWSocket, ChatBroadcaster, Const) {
         var api = {
             turnOn: turnOn,
             turnOff: turnOff,
@@ -31,7 +31,7 @@
         }
 
         function connect() {
-            connection = ChatWSocket.makeConnection("ws://chat-hmg.kuadro.com.br:8081");
+            connection = ChatWSocket.makeConnection(Const.wsUrl);
            
             connection.onOpen = onOpen;
             connection.onMessage = onMessage;

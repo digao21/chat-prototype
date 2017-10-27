@@ -7,7 +7,8 @@ angular.module('myApp', [
   'Chat',
   'myApp.view2',
   'login',
-  'myApp.version'
+  'myApp.version',
+  'Const'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');
